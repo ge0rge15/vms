@@ -1,0 +1,243 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+}
+
+/* Sidebar */
+
+.sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    width:250px;
+    height:100vh;
+    background:#111;
+    color:#fff;
+}
+
+.sidebar h2{
+    text-align:center;
+    padding:25px;
+    background:#c8102e;
+    font-size:24px;
+}
+
+.sidebar ul{
+    list-style:none;
+    margin-top:30px;
+}
+
+.sidebar ul li{
+    padding:18px 25px;
+    cursor:pointer;
+    transition:.3s;
+    font-size:16px;
+}
+
+.sidebar ul li i{
+    margin-right:12px;
+}
+
+.sidebar ul li:hover{
+    background:#c8102e;
+}
+
+/* Main Content */
+
+.main{
+    margin-left:250px;
+    padding:30px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.topbar h1{
+    color:#222;
+}
+
+.profile{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.profile img{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+}
+
+/* Statistics Cards */
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.card{
+    background:#fff;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h3{
+    color:#666;
+    margin-bottom:15px;
+}
+
+.card h2{
+    color:#c8102e;
+    font-size:34px;
+}
+
+/* Recent Visitors */
+
+.table-section{
+    margin-top:40px;
+    background:#fff;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+table th{
+    background:#c8102e;
+    color:#fff;
+    padding:15px;
+}
+
+table td{
+    padding:15px;
+    border-bottom:1px solid #ddd;
+}
+
+table tr:hover{
+    background:#f8f8f8;
+}
+
+/* Responsive */
+
+@media(max-width:1000px){
+
+.cards{
+    grid-template-columns:repeat(2,1fr);
+}
+
+}
+
+@media(max-width:768px){
+
+.sidebar{
+    width:80px;
+}
+
+.sidebar h2{
+    font-size:14px;
+}
+
+.sidebar ul li{
+    text-align:center;
+    padding:20px 5px;
+}
+
+.sidebar ul li i{
+    margin-right:0;
+}
+
+.main{
+    margin-left:80px;
+}
+
+.cards{
+    grid-template-columns:1fr;
+}
+/* ============================
+   FORM STYLES (Register Visitor)
+   ============================ */
+
+.table-section label {
+    display: block;
+    font-weight: 500;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.table-section input[type="text"],
+.table-section input[type="tel"],
+.table-section input[type="email"],
+.table-section select,
+.table-section textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    transition: 0.3s;
+    outline: none;
+}
+
+.table-section input:focus,
+.table-section select:focus,
+.table-section textarea:focus {
+    border-color: #c8102e;
+    box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.1);
+}
+
+.table-section textarea {
+    resize: vertical;
+}
+
+.table-section button[type="submit"] {
+    margin-top: 25px;
+    background: #c8102e;
+    color: white;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: 'Poppins', sans-serif;
+    transition: 0.3s;
+}
+
+.table-section button[type="submit"]:hover {
+    background: #a00d24;
+    transform: translateY(-2px);
+}
+
+/* ============================
+   ACTIVE SIDEBAR LINK
+   ============================ */
+.sidebar ul li.active {
+    background: #c8102e;
+    border-left: 4px solid #fff;
+}
+
+}
