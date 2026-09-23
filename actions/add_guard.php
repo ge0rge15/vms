@@ -42,13 +42,15 @@ if ($check->get_result()->num_rows > 0) {
     exit();
 }
 
-// Insert the guard
+// Hash the password before storing
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
 $stmt = $conn->prepare("
     INSERT INTO users (username, email, password, role, phone, shift) 
     VALUES (?, ?, ?, 'guard', ?, ?)
 ");
 
-$stmt->bind_param("sssss", $username, $email, $password, $phone, $shift);
+$stmt->bind_param("sssss", $username, $email, $hashed_password, $phone, $shift);
 
 if ($stmt->execute()) {
     $_SESSION['success'] = "Guard added successfully!";

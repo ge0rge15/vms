@@ -7,8 +7,33 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Get admin info from session
+require_once 'config/db.php';
 $admin_name = $_SESSION['username'];
+
+// ============================
+// DASHBOARD STATS
+// ============================
+
+// Total visitors this month
+$result = $conn->query("
+    SELECT COUNT(*) AS total 
+    FROM visitors 
+    WHERE MONTH(in_time) = MONTH(CURRENT_DATE()) 
+      AND YEAR(in_time) = YEAR(CURRENT_DATE())
+");
+$total_visitors_month = $result->fetch_assoc()['total'];
+
+// Active guards
+$result = $conn->query("SELECT COUNT(*) AS total FROM users WHERE role = 'guard' AND status = 'Active'");
+$active_guards = $result->fetch_assoc()['total'];
+
+// Total departments
+$result = $conn->query("SELECT COUNT(*) AS total FROM departments");
+$total_departments = $result->fetch_assoc()['total'];
+
+// Currently inside (visitors with status 'In')
+$result = $conn->query("SELECT COUNT(*) AS total FROM visitors WHERE status = 'In'");
+$currently_inside = $result->fetch_assoc()['total'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,14 +49,14 @@ $admin_name = $_SESSION['username'];
 
     <!-- SIDEBAR (Admin) -->
     <div class="sidebar">
-    <h2>KPC Admin</h2>
-    <ul>
-        <li class="active" onclick="setActive(this)"><i class="fa-solid fa-gauge"></i> Dashboard</li>
-        <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
-       <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
-        <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
-    </ul>
-</div>
+        <h2>KPC Admin</h2>
+        <ul>
+            <li class="active" onclick="setActive(this)"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+            <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
+            <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
+            <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
+        </ul>
+    </div>
 
     <!-- MAIN CONTENT -->
     <div class="main">
@@ -40,28 +65,28 @@ $admin_name = $_SESSION['username'];
         <div class="topbar">
             <h1>Admin Dashboard</h1>
             <div class="profile">
-    <span>Welcome, <?= htmlspecialchars($admin_name) ?></span>
-    <img src="https://ui-avatars.com/api/?name=<?= urlencode($admin_name) ?>&background=c8102e&color=fff" alt="Profile">
-</div>
+                <span>Welcome, <?= htmlspecialchars($admin_name) ?></span>
+                <img src="https://ui-avatars.com/api/?name=<?= urlencode($admin_name) ?>&background=c8102e&color=fff" alt="Profile">
+            </div>
         </div>
 
-        <!-- STATS CARDS -->
+        <!-- STATS CARDS (Live Data) -->
         <div class="cards">
             <div class="card">
                 <h3>Total Visitors This Month</h3>
-                <h2>450</h2>
+                <h2><?= $total_visitors_month ?></h2>
             </div>
             <div class="card">
                 <h3>Active Guards</h3>
-                <h2>5</h2>
+                <h2><?= $active_guards ?></h2>
             </div>
             <div class="card">
                 <h3>Departments</h3>
-                <h2>8</h2>
+                <h2><?= $total_departments ?></h2>
             </div>
             <div class="card">
-                <h3>Guards on Duty</h3>
-                <h2>5</h2>
+                <h3>Currently Inside</h3>
+                <h2><?= $currently_inside ?></h2>
             </div>
         </div>
 
