@@ -31,6 +31,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             <li onclick="window.location.href='dashboard-admin.php'"><i class="fa-solid fa-gauge"></i> Dashboard</li>
             <li class="active"><i class="fa-solid fa-users-gear"></i> Guard</li>
             <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
+            <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
             <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
         </ul>
     </div>
@@ -157,22 +158,50 @@ unset($_SESSION['success'], $_SESSION['error']);
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div>
                         <label style="display:block; margin-bottom:5px; font-weight:500;">Full Name *</label>
-                        <input type="text" name="username" placeholder="e.g. Ryan" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        <input 
+                            type="text" 
+                            name="username" 
+                            placeholder="e.g. Ryan" 
+                            required 
+                            data-type="text"
+                            pattern="[A-Za-z\s\-']+"
+                            title="Only letters, spaces, hyphens, and apostrophes are allowed"
+                            minlength="3"
+                            maxlength="50"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                     </div>
                     <div>
                         <label style="display:block; margin-bottom:5px; font-weight:500;">Phone Number</label>
-                        <input type="tel" name="phone" placeholder="e.g. 0712 345 678" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        <input 
+                            type="tel" 
+                            name="phone" 
+                            placeholder="e.g. 0712 345 678" 
+                            data-type="numbers"
+                            pattern="[0-9+\s]+"
+                            title="Only digits, spaces, and + are allowed"
+                            minlength="10"
+                            maxlength="15"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                     </div>
                 </div>
 
                 <div style="margin-top: 15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:500;">Email Address *</label>
-                    <input type="email" name="email" placeholder="e.g. ryan@kpc.com" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="email" name="email" placeholder="e.g. ryan@kpc.com" required maxlength="100" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                 </div>
 
                 <div style="margin-top: 15px;">
                     <label style="display:block; margin-bottom:5px; font-weight:500;">Password *</label>
-                    <input type="text" name="password" placeholder="e.g. guard123" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <input 
+                        type="text" 
+                        name="password" 
+                        placeholder="Min 8 chars, letters and numbers" 
+                        required 
+                        minlength="8"
+                        maxlength="50"
+                        pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
+                        title="At least 8 characters, must contain at least one letter and one number"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                 </div>
 
                 <div style="margin-top: 15px;">
@@ -210,6 +239,9 @@ unset($_SESSION['success'], $_SESSION['error']);
             }
         });
     </script>
+
+    <!-- Load script.js for input enforcement -->
+    <script src="script.js"></script>
 
 </body>
 </html>

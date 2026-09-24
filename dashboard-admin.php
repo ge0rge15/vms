@@ -48,16 +48,16 @@ $currently_inside = $result->fetch_assoc()['total'];
 <body>
 
     <!-- SIDEBAR (Admin) -->
-    <div class="sidebar">
-        <h2>KPC Admin</h2>
-        <ul>
-            <li class="active" onclick="setActive(this)"><i class="fa-solid fa-gauge"></i> Dashboard</li>
-            <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
-            <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
-            <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
-        </ul>
-    </div>
-
+   <div class="sidebar">
+    <h2>KPC Admin</h2>
+    <ul>
+        <li onclick="window.location.href='dashboard-admin.php'"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+        <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
+        <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
+        <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
+        <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
+    </ul>
+</div>
     <!-- MAIN CONTENT -->
     <div class="main">
         
