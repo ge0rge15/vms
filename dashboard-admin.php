@@ -48,16 +48,17 @@ $currently_inside = $result->fetch_assoc()['total'];
 <body>
 
     <!-- SIDEBAR (Admin) -->
-   <div class="sidebar">
-    <h2>KPC Admin</h2>
-    <ul>
-        <li onclick="window.location.href='dashboard-admin.php'"><i class="fa-solid fa-gauge"></i> Dashboard</li>
-        <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
-        <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
-        <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
-        <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
-    </ul>
-</div>
+    <div class="sidebar">
+        <h2>KPC Admin</h2>
+        <ul>
+            <li class="active" onclick="setActive(this)"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+            <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
+            <li onclick="window.location.href='visitor-admin.php'"><i class="fa-solid fa-list"></i> Visitor</li>
+            <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
+            <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
+        </ul>
+    </div>
+
     <!-- MAIN CONTENT -->
     <div class="main">
         
@@ -70,24 +71,49 @@ $currently_inside = $result->fetch_assoc()['total'];
             </div>
         </div>
 
-        <!-- STATS CARDS (Live Data) -->
+        <!-- STATS CARDS (Live Data with Icons) -->
         <div class="cards">
+            
             <div class="card">
-                <h3>Total Visitors This Month</h3>
-                <h2><?= $total_visitors_month ?></h2>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Total Visitors This Month</h3>
+                        <h2><?= $total_visitors_month ?></h2>
+                    </div>
+                    <i class="fa-solid fa-users" style="font-size: 32px; color: #c8102e; opacity: 0.15;"></i>
+                </div>
             </div>
+
             <div class="card">
-                <h3>Active Guards</h3>
-                <h2><?= $active_guards ?></h2>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Active Guards</h3>
+                        <h2><?= $active_guards ?></h2>
+                    </div>
+                    <i class="fa-solid fa-user-shield" style="font-size: 32px; color: #c8102e; opacity: 0.15;"></i>
+                </div>
             </div>
+
             <div class="card">
-                <h3>Departments</h3>
-                <h2><?= $total_departments ?></h2>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Departments</h3>
+                        <h2><?= $total_departments ?></h2>
+                    </div>
+                    <i class="fa-solid fa-building" style="font-size: 32px; color: #c8102e; opacity: 0.15;"></i>
+                </div>
             </div>
+
             <div class="card">
-                <h3>Currently Inside</h3>
-                <h2><?= $currently_inside ?></h2>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3>Currently Inside</h3>
+                        <h2><?= $currently_inside ?></h2>
+                    </div>
+                    <i class="fa-solid fa-person-walking-arrow-right" style="font-size: 32px; color: #c8102e; opacity: 0.15;"></i>
+                </div>
             </div>
+
         </div>
 
     </div>

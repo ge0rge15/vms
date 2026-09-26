@@ -7,6 +7,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 require_once 'config/db.php';
 $admin_name = $_SESSION['username'];
 
+// Flash messages
+$success = $_SESSION['success'] ?? '';
+$error   = $_SESSION['error'] ?? '';
+unset($_SESSION['success'], $_SESSION['error']);
+
 // ============================
 // SEARCH + FILTER PARAMETERS
 // ============================
@@ -19,12 +24,11 @@ $guard_filter = trim($_GET['guard_id'] ?? '');
 // Build the query dynamically (with JOIN for guard name)
 $sql = "SELECT v.*, u.username AS guard_name 
         FROM visitors v 
-        JOIN users u ON v.registered_by = u.id 
+        LEFT JOIN users u ON v.registered_by = u.id 
         WHERE 1=1";
 $params = [];
 $types = "";
 
-// Search box
 if (!empty($search)) {
     $sql .= " AND (v.visitor_name LIKE ? OR v.phone LIKE ? OR v.meet_person LIKE ? OR v.department LIKE ?)";
     $like = "%" . $search . "%";
@@ -35,14 +39,12 @@ if (!empty($search)) {
     $types .= "ssss";
 }
 
-// Status filter
 if (!empty($status_filter) && in_array($status_filter, ['In', 'Out'])) {
     $sql .= " AND v.status = ?";
     $params[] = $status_filter;
     $types .= "s";
 }
 
-// Date range
 if (!empty($date_from)) {
     $sql .= " AND DATE(v.in_time) >= ?";
     $params[] = $date_from;
@@ -54,7 +56,6 @@ if (!empty($date_to)) {
     $types .= "s";
 }
 
-// Guard filter
 if (!empty($guard_filter)) {
     $sql .= " AND v.registered_by = ?";
     $params[] = intval($guard_filter);
@@ -86,16 +87,17 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
 <body>
 
     <!-- SIDEBAR (Admin) -->
-  <div class="sidebar">
-    <h2>KPC Admin</h2>
-    <ul>
-        <li onclick="window.location.href='dashboard-admin.php'"><i class="fa-solid fa-gauge"></i> Dashboard</li>
-        <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
-        <li class="active"><i class="fa-solid fa-list"></i> Visitor</li>
-        <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
-        <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
-    </ul>
-</div>
+    <div class="sidebar">
+        <h2>KPC Admin</h2>
+        <ul>
+            <li onclick="window.location.href='dashboard-admin.php'"><i class="fa-solid fa-gauge"></i> Dashboard</li>
+            <li onclick="window.location.href='guard.php'"><i class="fa-solid fa-users-gear"></i> Guard</li>
+            <li class="active"><i class="fa-solid fa-list"></i> Visitor</li>
+            <li onclick="window.location.href='reports.php'"><i class="fa-solid fa-chart-column"></i> Reports</li>
+            <li onclick="window.location.href='actions/logout.php'"><i class="fa-solid fa-right-from-bracket"></i> Logout</li>
+        </ul>
+    </div>
+
     <!-- MAIN CONTENT -->
     <div class="main">
         
@@ -115,6 +117,19 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
             </p>
         </div>
 
+        <!-- FLASH MESSAGES -->
+        <?php if ($success): ?>
+            <div style="background:#e5ffe5;color:#0a7a0a;padding:12px 20px;border-radius:8px;margin-bottom:15px;">
+                ✅ <?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($error): ?>
+            <div style="background:#ffe5e5;color:#c8102e;padding:12px 20px;border-radius:8px;margin-bottom:15px;">
+                ⚠️ <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
         <!-- VISITOR TABLE -->
         <div class="table-section">
             <h2 style="margin: 0 0 15px 0;">All Visitor Records</h2>
@@ -122,7 +137,6 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
             <!-- SEARCH + FILTER BAR -->
             <form method="GET" action="visitor-admin.php" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
                 
-                <!-- Search -->
                 <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Search</label>
                     <div style="position: relative;">
@@ -132,7 +146,6 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
                     </div>
                 </div>
 
-                <!-- Guard filter -->
                 <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Registered By</label>
                     <select name="guard_id" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px; background: #fff;">
@@ -145,7 +158,6 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
                     </select>
                 </div>
 
-                <!-- Status -->
                 <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Status</label>
                     <select name="status" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px; background: #fff;">
@@ -155,21 +167,18 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
                     </select>
                 </div>
 
-                <!-- Date From -->
                 <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">From</label>
                     <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>"
                            style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
                 </div>
 
-                <!-- Date To -->
                 <div>
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">To</label>
                     <input type="date" name="date_to" value="<?= htmlspecialchars($date_to) ?>"
                            style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
                 </div>
 
-                <!-- Buttons -->
                 <div style="display: flex; gap: 6px;">
                     <button type="submit" style="background: #c8102e; color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">
                         Filter
@@ -226,11 +235,25 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
                                     <span style="background: #c8102e; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Out</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= htmlspecialchars($row['guard_name']) ?></td>
-                            <td>
+                            <td><?= htmlspecialchars($row['guard_name'] ?? 'N/A') ?></td>
+                            <td style="white-space: nowrap;">
+                                <button 
+                                    onclick='openEditVisitorModal(<?= htmlspecialchars(json_encode([
+                                        "id" => $row["id"],
+                                        "visitor_name" => $row["visitor_name"],
+                                        "phone" => $row["phone"],
+                                        "id_number" => $row["id_number"] ?? "",
+                                        "company" => $row["company"] ?? "",
+                                        "meet_person" => $row["meet_person"],
+                                        "department" => $row["department"],
+                                        "purpose" => $row["purpose"] ?? ""
+                                    ]), ENT_QUOTES, "UTF-8") ?>)'
+                                    style="background: #17a2b8; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-block; border: none; cursor: pointer;">
+                                    Edit
+                                </button>
                                 <a href="actions/delete_visitor.php?id=<?= $row['id'] ?>" 
                                    onclick="return confirm('Delete this visitor record?');"
-                                   style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block;">
+                                   style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-block;">
                                     Delete
                                 </a>
                             </td>
@@ -242,6 +265,150 @@ $guards_list = $conn->query("SELECT id, username FROM users WHERE role = 'guard'
         </div>
 
     </div>
+
+    <!-- ========================================== -->
+    <!-- EDIT VISITOR MODAL                         -->
+    <!-- ========================================== -->
+    <div id="editVisitorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        
+        <div style="background: white; width: 550px; max-width: 90%; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #c8102e; margin: 0;">Edit Visitor</h2>
+                <i class="fa-solid fa-xmark" onclick="closeEditVisitorModal()" style="cursor: pointer; font-size: 24px; color: #666;"></i>
+            </div>
+
+            <form action="actions/edit_visitor.php" method="POST">
+                <input type="hidden" name="id" id="editv_id">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Visitor Name *</label>
+                        <input 
+                            type="text" 
+                            name="visitor_name" 
+                            id="editv_name"
+                            required 
+                            data-type="text"
+                            pattern="[A-Za-z\s\-']+"
+                            title="Only letters, spaces, hyphens, and apostrophes are allowed"
+                            minlength="3"
+                            maxlength="100"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Phone Number *</label>
+                        <input 
+                            type="tel" 
+                            name="phone" 
+                            id="editv_phone"
+                            required
+                            data-type="numbers"
+                            pattern="[0-9+\s]+"
+                            title="Only digits, spaces, and + are allowed"
+                            minlength="10"
+                            maxlength="15"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">ID / Passport Number</label>
+                        <input 
+                            type="text" 
+                            name="id_number" 
+                            id="editv_id_number"
+                            data-type="alphanumeric"
+                            pattern="[A-Za-z0-9]+"
+                            title="Only letters and numbers are allowed"
+                            minlength="6"
+                            maxlength="15"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Company</label>
+                        <input 
+                            type="text" 
+                            name="company" 
+                            id="editv_company"
+                            maxlength="100"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Meeting Person *</label>
+                        <input 
+                            type="text" 
+                            name="meet_person" 
+                            id="editv_meet"
+                            required 
+                            data-type="text"
+                            pattern="[A-Za-z\s\-']+"
+                            title="Only letters, spaces, hyphens, and apostrophes are allowed"
+                            minlength="2"
+                            maxlength="100"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Department *</label>
+                        <select name="department" id="editv_department" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:#fff;">
+                            <option value="">-- Select --</option>
+                            <?php
+                            $depts = $conn->query("SELECT department_name FROM departments ORDER BY department_name");
+                            while ($d = $depts->fetch_assoc()):
+                            ?>
+                                <option value="<?= htmlspecialchars($d['department_name']) ?>"><?= htmlspecialchars($d['department_name']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Purpose of Visit</label>
+                    <textarea 
+                        name="purpose" 
+                        id="editv_purpose"
+                        rows="3" 
+                        maxlength="500"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-family: 'Poppins', sans-serif; resize:vertical;"></textarea>
+                </div>
+
+                <button type="submit" style="background: #c8102e; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px;">
+                    Update Visitor
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        function openEditVisitorModal(v) {
+            document.getElementById('editv_id').value = v.id;
+            document.getElementById('editv_name').value = v.visitor_name;
+            document.getElementById('editv_phone').value = v.phone;
+            document.getElementById('editv_id_number').value = v.id_number || '';
+            document.getElementById('editv_company').value = v.company || '';
+            document.getElementById('editv_meet').value = v.meet_person;
+            document.getElementById('editv_department').value = v.department;
+            document.getElementById('editv_purpose').value = v.purpose || '';
+            document.getElementById('editVisitorModal').style.display = 'flex';
+        }
+
+        function closeEditVisitorModal() {
+            document.getElementById('editVisitorModal').style.display = 'none';
+        }
+
+        document.getElementById('editVisitorModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeEditVisitorModal();
+            }
+        });
+    </script>
+
+    <!-- Load script.js for input enforcement -->
+    <script src="script.js"></script>
 
 </body>
 </html>

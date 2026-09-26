@@ -11,6 +11,49 @@ $admin_name = $_SESSION['username'];
 $success = $_SESSION['success'] ?? '';
 $error   = $_SESSION['error'] ?? '';
 unset($_SESSION['success'], $_SESSION['error']);
+
+// ============================
+// SEARCH + FILTER PARAMETERS
+// ============================
+$search = trim($_GET['search'] ?? '');
+$shift_filter = trim($_GET['shift'] ?? '');
+$status_filter = trim($_GET['status'] ?? '');
+
+$sql = "SELECT id, username, email, phone, shift, status 
+        FROM users 
+        WHERE role = 'guard'";
+$params = [];
+$types = "";
+
+if (!empty($search)) {
+    $sql .= " AND (username LIKE ? OR email LIKE ? OR phone LIKE ?)";
+    $like = "%" . $search . "%";
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $types .= "sss";
+}
+
+if (!empty($shift_filter) && in_array($shift_filter, ['Morning', 'Afternoon', 'Night'])) {
+    $sql .= " AND shift = ?";
+    $params[] = $shift_filter;
+    $types .= "s";
+}
+
+if (!empty($status_filter) && in_array($status_filter, ['Active', 'Inactive'])) {
+    $sql .= " AND status = ?";
+    $params[] = $status_filter;
+    $types .= "s";
+}
+
+$sql .= " ORDER BY created_at DESC";
+
+$stmt = $conn->prepare($sql);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,18 +116,54 @@ unset($_SESSION['success'], $_SESSION['error']);
 
         <!-- GUARD TABLE -->
         <div class="table-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">All Guards</h2>
+            <h2 style="margin: 0 0 15px 0;">All Guards</h2>
+
+            <!-- SEARCH + FILTER BAR -->
+            <form method="GET" action="guard.php" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                
+                <!-- Search -->
                 <div>
-                    <label style="margin-right: 10px; color: #666;">Show</label>
-                    <select style="padding: 5px; border-radius: 5px; border: 1px solid #ddd;">
-                        <option>10</option>
-                        <option>25</option>
-                        <option>50</option>
-                    </select>
-                    <label style="margin-left: 10px; color: #666;">entries</label>
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Search</label>
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999; font-size: 13px;"></i>
+                        <input type="text" name="search" placeholder="Name, email, or phone..." value="<?= htmlspecialchars($search) ?>"
+                               style="width: 100%; padding: 9px 10px 9px 32px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                    </div>
                 </div>
-            </div>
+
+                <!-- Shift filter -->
+                <div>
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Shift</label>
+                    <select name="shift" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px; background: #fff;">
+                        <option value="">All Shifts</option>
+                        <option value="Morning" <?= $shift_filter === 'Morning' ? 'selected' : '' ?>>Morning</option>
+                        <option value="Afternoon" <?= $shift_filter === 'Afternoon' ? 'selected' : '' ?>>Afternoon</option>
+                        <option value="Night" <?= $shift_filter === 'Night' ? 'selected' : '' ?>>Night</option>
+                    </select>
+                </div>
+
+                <!-- Status filter -->
+                <div>
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Status</label>
+                    <select name="status" style="width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px; background: #fff;">
+                        <option value="">All</option>
+                        <option value="Active" <?= $status_filter === 'Active' ? 'selected' : '' ?>>Active</option>
+                        <option value="Inactive" <?= $status_filter === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 6px;">
+                    <button type="submit" style="background: #c8102e; color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">
+                        Filter
+                    </button>
+                    <?php if ($search || $shift_filter || $status_filter): ?>
+                        <a href="guard.php" style="background: #eee; color: #333; text-decoration: none; padding: 9px 14px; border-radius: 6px; font-size: 13px;">
+                            Clear
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </form>
 
             <table id="guardTable">
                 <thead>
@@ -99,17 +178,14 @@ unset($_SESSION['success'], $_SESSION['error']);
                 </thead>
                 <tbody>
                 <?php
-                $result = $conn->query("
-                    SELECT id, username, email, phone, shift, status 
-                    FROM users 
-                    WHERE role = 'guard' 
-                    ORDER BY created_at DESC
-                ");
-
                 if ($result->num_rows === 0): ?>
                     <tr>
                         <td colspan="6" style="text-align:center; padding: 30px; color:#999;">
-                            No guards added yet.
+                            <?php if ($search || $shift_filter || $status_filter): ?>
+                                No guards match your filter.
+                            <?php else: ?>
+                                No guards added yet.
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php else: ?>
@@ -126,7 +202,18 @@ unset($_SESSION['success'], $_SESSION['error']);
                                     <span style="background: #666; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Inactive</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td style="white-space: nowrap;">
+                                <button 
+                                    onclick='openEditModal(<?= htmlspecialchars(json_encode([
+                                        "id" => $row["id"],
+                                        "username" => $row["username"],
+                                        "email" => $row["email"],
+                                        "phone" => $row["phone"] ?? "",
+                                        "shift" => $row["shift"] ?? ""
+                                    ]), ENT_QUOTES, "UTF-8") ?>)'
+                                    style="background: #17a2b8; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-block; border: none; cursor: pointer;">
+                                    Edit
+                                </button>
                                 <a href="actions/delete_guard.php?id=<?= $row['id'] ?>" 
                                    onclick="return confirm('Delete this guard?');"
                                    style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; text-decoration: none; display: inline-block;">
@@ -143,7 +230,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     </div>
 
     <!-- ========================================== -->
-    <!-- MODAL (POP-UP FORM)                        -->
+    <!-- ADD MODAL                                  -->
     <!-- ========================================== -->
     <div id="guardModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
         
@@ -222,9 +309,90 @@ unset($_SESSION['success'], $_SESSION['error']);
     </div>
 
     <!-- ========================================== -->
+    <!-- EDIT MODAL                                 -->
+    <!-- ========================================== -->
+    <div id="editGuardModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        
+        <div style="background: white; width: 550px; max-width: 90%; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #c8102e; margin: 0;">Edit Guard</h2>
+                <i class="fa-solid fa-xmark" onclick="closeEditModal()" style="cursor: pointer; font-size: 24px; color: #666;"></i>
+            </div>
+
+            <form action="actions/edit_guard.php" method="POST">
+                <input type="hidden" name="id" id="edit_id">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Full Name *</label>
+                        <input 
+                            type="text" 
+                            name="username" 
+                            id="edit_username"
+                            required 
+                            data-type="text"
+                            pattern="[A-Za-z\s\-']+"
+                            title="Only letters, spaces, hyphens, and apostrophes are allowed"
+                            minlength="3"
+                            maxlength="50"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div>
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            name="phone" 
+                            id="edit_phone"
+                            data-type="numbers"
+                            pattern="[0-9+\s]+"
+                            title="Only digits, spaces, and + are allowed"
+                            minlength="10"
+                            maxlength="15"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Email Address *</label>
+                    <input type="email" name="email" id="edit_email" required maxlength="100" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Password</label>
+                    <input 
+                        type="text" 
+                        name="password" 
+                        placeholder="Leave blank to keep current password" 
+                        minlength="8"
+                        maxlength="50"
+                        pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
+                        title="At least 8 characters, must contain at least one letter and one number"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    <small style="color:#888; font-size:12px;">🔒 Password is securely hashed.</small>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:500;">Shift *</label>
+                    <select name="shift" id="edit_shift" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:#fff;">
+                        <option value="">-- Select Shift --</option>
+                        <option value="Morning">Morning</option>
+                        <option value="Afternoon">Afternoon</option>
+                        <option value="Night">Night</option>
+                    </select>
+                </div>
+
+                <button type="submit" style="background: #c8102e; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px;">
+                    Update Guard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- JAVASCRIPT                                 -->
     <!-- ========================================== -->
     <script>
+        // ----- Add Modal -----
         function openModal() {
             document.getElementById('guardModal').style.display = 'flex';
         }
@@ -236,6 +404,26 @@ unset($_SESSION['success'], $_SESSION['error']);
         document.getElementById('guardModal').addEventListener('click', function(event) {
             if (event.target === this) {
                 closeModal();
+            }
+        });
+
+        // ----- Edit Modal -----
+        function openEditModal(guard) {
+            document.getElementById('edit_id').value = guard.id;
+            document.getElementById('edit_username').value = guard.username;
+            document.getElementById('edit_email').value = guard.email;
+            document.getElementById('edit_phone').value = guard.phone || '';
+            document.getElementById('edit_shift').value = guard.shift || '';
+            document.getElementById('editGuardModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editGuardModal').style.display = 'none';
+        }
+
+        document.getElementById('editGuardModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeEditModal();
             }
         });
     </script>
