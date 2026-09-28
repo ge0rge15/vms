@@ -117,37 +117,208 @@ $depts = $conn->query("SELECT department_name FROM departments ORDER BY departme
 $guards = $conn->query("SELECT id, username FROM users WHERE role = 'guard' ORDER BY username");
 
 // ============================
-// HANDLE CSV EXPORT
+// HANDLE PDF EXPORT
 // ============================
-if (isset($_GET['export']) && $_GET['export'] === 'csv') {
-    header('Content-Type: text/csv');
-    header('Content-Disposition: attachment; filename="visitor_report_' . $date_from . '_to_' . $date_to . '.csv"');
-    
-    $output = fopen('php://output', 'w');
-    
-    fputcsv($output, [
-        'Visitor Name', 'Phone', 'ID Number', 'Company', 
-        'Meet Person', 'Department', 'Purpose', 
-        'In Time', 'Out Time', 'Status', 'Registered By'
-    ]);
-    
-    foreach ($visitors as $v) {
-        fputcsv($output, [
-            $v['visitor_name'],
-            $v['phone'],
-            $v['id_number'] ?? '-',
-            $v['company'] ?? '-',
-            $v['meet_person'],
-            $v['department'],
-            $v['purpose'] ?? '-',
-            $v['in_time'],
-            $v['out_time'] ?? '-',
-            $v['status'],
-            $v['guard_name'] ?? 'N/A'
-        ]);
-    }
-    
-    fclose($output);
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+
+    require_once 'vendor/autoload.php';
+
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {
+                font-family: DejaVu Sans, sans-serif;
+                font-size: 11px;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }
+            .header {
+                background: #c8102e;
+                color: #fff;
+                padding: 20px 25px;
+                margin-bottom: 20px;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 20px;
+            }
+            .header p {
+                margin: 5px 0 0 0;
+                font-size: 12px;
+                opacity: 0.9;
+            }
+            .meta {
+                padding: 0 25px;
+                margin-bottom: 20px;
+                font-size: 11px;
+                color: #555;
+            }
+            .meta span {
+                margin-right: 25px;
+            }
+            .summary {
+                padding: 0 25px;
+                margin-bottom: 20px;
+            }
+            .summary table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .summary td {
+                border: 1px solid #ddd;
+                padding: 12px;
+                text-align: center;
+                background: #f9f9f9;
+            }
+            .summary .label {
+                font-size: 10px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .summary .value {
+                font-size: 18px;
+                font-weight: bold;
+                color: #c8102e;
+            }
+            .records {
+                padding: 0 25px;
+            }
+            table.data {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            table.data thead th {
+                background: #c8102e;
+                color: #fff;
+                padding: 8px 6px;
+                font-size: 10px;
+                text-align: left;
+                text-transform: uppercase;
+            }
+            table.data tbody td {
+                padding: 7px 6px;
+                font-size: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            table.data tbody tr:nth-child(even) {
+                background: #fafafa;
+            }
+            .status-in  { color: #28a745; font-weight: bold; }
+            .status-out { color: #c8102e; font-weight: bold; }
+            .footer {
+                position: fixed;
+                bottom: 15px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 9px;
+                color: #999;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="header">
+            <h1>KPC Visitor Management System</h1>
+            <p>Visitor Report</p>
+        </div>
+
+        <div class="meta">
+            <span><strong>Period:</strong> <?= htmlspecialchars($date_from) ?> to <?= htmlspecialchars($date_to) ?></span>
+            <span><strong>Generated:</strong> <?= date('d M Y, h:i A') ?></span>
+            <span><strong>By:</strong> <?= htmlspecialchars($admin_name) ?></span>
+        </div>
+
+        <div class="summary">
+            <table>
+                <tr>
+                    <td>
+                        <div class="label">Total Visitors</div>
+                        <div class="value"><?= $total_visitors ?></div>
+                    </td>
+                    <td>
+                        <div class="label">Currently Inside</div>
+                        <div class="value"><?= $currently_inside ?></div>
+                    </td>
+                    <td>
+                        <div class="label">Checked Out</div>
+                        <div class="value"><?= $checked_out ?></div>
+                    </td>
+                    <td>
+                        <div class="label">Avg. Duration</div>
+                        <div class="value"><?= $avg_duration ?> min</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="records">
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>Visitor</th>
+                        <th>Phone</th>
+                        <th>Meet Person</th>
+                        <th>Department</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Status</th>
+                        <th>Registered By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if ($total_visitors === 0): ?>
+                    <tr>
+                        <td colspan="8" style="text-align:center; padding:20px; color:#999;">
+                            No visitors found for this filter.
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($visitors as $row): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['visitor_name']) ?></td>
+                            <td><?= htmlspecialchars($row['phone']) ?></td>
+                            <td><?= htmlspecialchars($row['meet_person']) ?></td>
+                            <td><?= htmlspecialchars($row['department']) ?></td>
+                            <td><?= date('d M Y h:i A', strtotime($row['in_time'])) ?></td>
+                            <td><?= $row['out_time'] ? date('d M Y h:i A', strtotime($row['out_time'])) : '-' ?></td>
+                            <td class="<?= $row['status'] === 'In' ? 'status-in' : 'status-out' ?>">
+                                <?= htmlspecialchars($row['status']) ?>
+                            </td>
+                            <td><?= htmlspecialchars($row['guard_name'] ?? 'N/A') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            KPC VMS — Confidential Report
+        </div>
+
+    </body>
+    </html>
+    <?php
+    $html = ob_get_clean();
+
+    $options = new \Dompdf\Options();
+    $options->set('isRemoteEnabled', true);
+    $options->set('isHtml5ParserEnabled', true);
+
+    $dompdf = new \Dompdf\Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+
+    $filename = 'visitor_report_' . $date_from . '_to_' . $date_to . '.pdf';
+    $dompdf->stream($filename, ['Attachment' => true]);
     exit();
 }
 ?>
@@ -277,9 +448,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         <!-- EXPORT BUTTON -->
         <?php if ($total_visitors > 0): ?>
             <div class="table-section" style="text-align: right;">
-                <a href="?date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&status=<?= urlencode($status_filter) ?>&department=<?= urlencode($dept_filter) ?>&guard_id=<?= urlencode($guard_filter) ?>&export=csv"
-                   style="background: #28a745; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
-                    <i class="fa-solid fa-download"></i> Export Full Report (CSV)
+                <a href="?date_from=<?= urlencode($date_from) ?>&date_to=<?= urlencode($date_to) ?>&status=<?= urlencode($status_filter) ?>&department=<?= urlencode($dept_filter) ?>&guard_id=<?= urlencode($guard_filter) ?>&export=pdf"
+                   style="background: #c8102e; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-block;">
+                    <i class="fa-solid fa-file-pdf"></i> Export Report (PDF)
                 </a>
             </div>
         <?php endif; ?>
